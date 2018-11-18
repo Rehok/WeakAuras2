@@ -16,11 +16,13 @@ local default = {
   color = {1, 1, 1, 1},
   text1Enabled = true,
   text1Color = {1, 1, 1, 1},
+  text1ClassColor = false,
   text1 = "%s",
   text1Point = "BOTTOMRIGHT",
   text1Containment = "INSIDE",
   text2Enabled = false,
   text2Color = {1, 1, 1, 1},
+  text2ClassColor = false,
   text2 = "%p",
   text2Point = "CENTER",
   text2Containment = "INSIDE",
@@ -45,8 +47,6 @@ local default = {
   glowColor = {1, 1, 1, 1},
   glowType = "buttonOverlay",
   cooldownTextEnabled = true,
-  cooldownSwipe = true,
-  cooldownEdge = false,
 };
 
 WeakAuras.regionPrototype.AddAlphaToDefault(default);
@@ -103,6 +103,11 @@ local properties = {
     setter = "SetText1Color",
     type = "color"
   },
+  text1ClassColor = {
+    display = L["1. Text Class Color"],
+    setter = "SetTextClassColor",
+    type = "bool"
+  },
   text1FontSize = {
     display = L["1. Text Size"],
     setter = "SetText1Height",
@@ -116,6 +121,11 @@ local properties = {
     display = L["2. Text Color"],
     setter = "SetText2Color",
     type = "color"
+  },
+  text2ClassColor = {
+    display = L["2. Text Class Color"],
+    setter = "SetTextClassColor",
+    type = "bool"
   },
   text2FontSize = {
     display = L["2. Text Size"],
@@ -135,16 +145,6 @@ local properties = {
     display = L["Inverse"],
     setter = "SetInverse",
     type = "bool"
-  },
-  cooldownSwipe = {
-    display = WeakAuras.newFeatureString .. L["Cooldown Swipe"],
-    setter = "SetCooldownSwipe",
-    type = "bool",
-  },
-  cooldownEdge = {
-    display = WeakAuras.newFeatureString .. L["Cooldown Edge"],
-    setter = "SetCooldownEdge",
-    type = "bool",
   },
   zoom = {
     display = L["Zoom"],
@@ -235,6 +235,7 @@ local function create(parent, data)
   local cooldown = CreateFrame("COOLDOWN", "WeakAurasCooldown"..frameId, region, "CooldownFrameTemplate");
   region.cooldown = cooldown;
   cooldown:SetAllPoints(icon);
+  cooldown:SetDrawEdge(false);
 
   local stacksFrame = CreateFrame("frame", nil, region);
   local stacks = stacksFrame:CreateFontString(nil, "OVERLAY");
@@ -271,7 +272,7 @@ local function create(parent, data)
   return region;
 end
 
-local function configureText(fontString, icon, enabled, point, width, height, containment, font, fontSize, fontFlags, textColor)
+local function configureText(fontString, icon, enabled, point, width, height, containment, font, fontSize, fontFlags, textColor, textClassColor)
   if (enabled) then
     fontString:Show();
   else
@@ -310,7 +311,16 @@ local function configureText(fontString, icon, enabled, point, width, height, co
   fontString:SetText(t);
 
   fontString:SetTextHeight(fontSize);
+
+  -- This can be done better.
+  if not textClassColor then
   fontString:SetTextColor(textColor[1], textColor[2], textColor[3], textColor[4]);
+  end
+  
+  if textClassColor then
+    local color = RAID_CLASS_COLORS[select(2, UnitClass("player"))]
+    fontString:SetTextColor(color.r, color.g, color.b, color.a); 
+  end
 
   fontString:SetJustifyH(h);
   fontString:SetJustifyV(v);
@@ -354,8 +364,8 @@ local function modify(parent, region, data)
   region.zoom = data.zoom;
   icon:SetAllPoints();
 
-  configureText(stacks, icon, data.text1Enabled, data.text1Point, data.width, data.height, data.text1Containment, data.text1Font, data.text1FontSize, data.text1FontFlags, data.text1Color);
-  configureText(text2, icon, data.text2Enabled, data.text2Point, data.width, data.height, data.text2Containment, data.text2Font, data.text2FontSize, data.text2FontFlags, data.text2Color);
+  configureText(stacks, icon, data.text1Enabled, data.text1Point, data.width, data.height, data.text1Containment, data.text1Font, data.text1FontSize, data.text1FontFlags, data.text1Color, data.text1ClassColor);
+  configureText(text2, icon, data.text2Enabled, data.text2Point, data.width, data.height, data.text2Containment, data.text2Font, data.text2FontSize, data.text2FontFlags, data.text2Color, data.text2ClassColor);
 
   local texWidth = 1 - region.zoom * 0.5;
   local aspectRatio = region.keepAspectRatio and region.width / region.height or 1;
@@ -585,6 +595,10 @@ local function modify(parent, region, data)
     region.stacks:SetTextColor(r, g, b, a);
   end
 
+  function region:SetTextClassColor(b)
+      region.stacks:SetTextColor(RAID_CLASS_COLORS[select(2, UnitClass("player"))])   
+  end
+
   function region:SetText2Color(r, g, b, a)
     region.text2:SetTextColor(r, g, b, a);
   end
@@ -609,19 +623,6 @@ local function modify(parent, region, data)
       cooldown:SetCooldown(cooldown.expirationTime - cooldown.duration, cooldown.duration);
     end
   end
-
-  function region:SetCooldownSwipe(cooldownSwipe)
-    region.cooldownSwipe = cooldownSwipe;
-    cooldown:SetDrawSwipe(cooldownSwipe);
-  end
-
-  function region:SetCooldownEdge(cooldownEdge)
-    region.cooldownEdge = cooldownEdge;
-    cooldown:SetDrawEdge(cooldownEdge);
-  end
-
-  region:SetCooldownSwipe(data.cooldownSwipe)
-  region:SetCooldownEdge(data.cooldownEdge)
 
   function region:SetZoom(zoom)
     region.zoom = zoom;
