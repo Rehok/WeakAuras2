@@ -13,8 +13,11 @@ local default = {
   text = true,
   stacks = true,
   textColor = {1.0, 1.0, 1.0, 1.0},
+  textClassColor = false,
   timerColor = {1.0, 1.0, 1.0, 1.0},
+  timerClassColor = false,
   stacksColor = {1.0, 1.0, 1.0, 1.0},
+  stacksClassColor = false,
   textFont = "Friz Quadrata TT",
   timerFont = "Friz Quadrata TT",
   stacksFont = "Friz Quadrata TT",
@@ -127,15 +130,30 @@ local properties = {
     setter = "SetTextColor",
     type = "color"
   },
+  textClassColor = {
+    display = L["First Text Class Color"],
+    setter = "SetTextClassColor",
+    type = "bool"
+  },
   timerColor = {
     display = L["Second Text Color"],
     setter = "SetTimerColor",
     type = "color"
   },
+  timerClassColor = {
+    display = L["Second Text Class Color"],
+    setter = "SetTimerClassColor",
+    type = "bool"
+  },
   stacksColor = {
     display = L["Stacks Text Color"],
     setter = "SetStacksColor",
     type = "color"
+  },
+  stacksClassColor = {
+    display = L["Stacks Text Class Color"],
+    setter = "SetStacksClassColor",
+    type = "bool"
   },
   textSize = {
     display = L["First Text Size"],
@@ -1155,6 +1173,7 @@ local function modify(parent, region, data)
     self.bar:SetForegroundColor(self.color_anim_r or r, self.color_anim_g or g, self.color_anim_b or b, self.color_anim_a or a);
   end
 
+
   region.ColorAnim = function(self, r, g, b, a)
     self.color_anim_r = r;
     self.color_anim_g = g;
@@ -1176,7 +1195,13 @@ local function modify(parent, region, data)
     -- Update text font
     text:SetFont(SharedMedia:Fetch("font", data.textFont), data.textSize, data.textFlags and data.textFlags ~= "None" and data.textFlags);
     text:SetTextHeight(data.textSize);
+    if data.textClassColor then
+      local col = RAID_CLASS_COLORS[select(2, UnitClass("player"))]
+      text:SetTextColor(col.r, col.g, col.b, col.a);
+    else
     text:SetTextColor(data.textColor[1], data.textColor[2], data.textColor[3], data.textColor[4]);
+    end
+
     text:SetWordWrap(false);
     animRotate(text, textDegrees);
     text:Show();
@@ -1191,7 +1216,13 @@ local function modify(parent, region, data)
     -- Update timer font
     timer:SetFont(SharedMedia:Fetch("font", data.timerFont), data.timerSize, data.timerFlags and data.timerFlags ~= "None" and data.timerFlags);
     timer:SetTextHeight(data.timerSize);
+  if data.timerClassColor then
+  local col = RAID_CLASS_COLORS[select(2, UnitClass("player"))]
+  timer:SetTextColor(col.r, col.g, col.b, col.a);
+  else
     timer:SetTextColor(data.timerColor[1], data.timerColor[2], data.timerColor[3], data.timerColor[4]);
+  end
+
     animRotate(timer, textDegrees);
     timer:Show();
     timer.visible = true;
@@ -1236,7 +1267,13 @@ local function modify(parent, region, data)
       -- Update stack font
       stacks:SetFont(SharedMedia:Fetch("font", data.stacksFont), data.stacksSize, data.stacksFlags and data.stacksFlags ~= "None" and data.stacksFlags);
       stacks:SetTextHeight(data.stacksSize);
+    if data.stacksClassColor then
+      local col = RAID_CLASS_COLORS[select(2, UnitClass("player"))]
+      stacks:SetTextColor(col.r, col.g, col.b, col.a);
+    else
       stacks:SetTextColor(data.stacksColor[1], data.stacksColor[2], data.stacksColor[3], data.stacksColor[4]);
+    end
+
       animRotate(stacks, textDegrees);
 
       -- Align text after rotation
@@ -1480,13 +1517,24 @@ local function modify(parent, region, data)
   function region:SetTextColor(r, g, b, a)
     self.text:SetTextColor(r, g, b, a);
   end
+  function region:SetTextClassColor(b)
+    self.text:SetTextColor(RAID_CLASS_COLORS[select(2, UnitClass("player"))])   
+end
 
   function region:SetTimerColor(r, g, b, a)
     self.timer:SetTextColor(r, g, b, a);
   end
 
+  function region:SetTimerClassColor(b)
+    self.timer:SetTextColor(RAID_CLASS_COLORS[select(2, UnitClass("player"))]) 
+  end
+
   function region:SetStacksColor(r, g, b, a)
     self.stacks:SetTextColor(r, g, b, a);
+  end
+
+  function region:SetStacksClassColor(b)
+    self.stacks:SetTextColor(RAID_CLASS_COLORS[select(2, UnitClass("player"))]) 
   end
 
   function region:SetTextSize(size)
